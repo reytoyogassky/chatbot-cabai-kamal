@@ -195,7 +195,7 @@ export default function Sidebar({
         className="px-4 py-3 text-xs text-center leading-relaxed font-extrabold uppercase"
         style={{ borderTop: "3px solid #000", color: "#fff", background: "#000" }}
       >
-        Skripsi Kamal Nurfalah · UNSAP 2025
+        Skripsi Kamal Nurfalah · UNSAP 2026
       </div>
     </aside>
   )

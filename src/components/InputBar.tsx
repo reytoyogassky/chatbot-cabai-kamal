@@ -283,7 +283,7 @@ export default function InputBar({ onSend, disabled = false }: InputBarProps) {
 
       {recordState === "idle" && sttSupported && (
         <p className="text-center text-xs mt-2 font-bold uppercase" style={{ color: "var(--text-muted)" }}>
-          Shift+Enter untuk baris baru · Data penelitian Sumedang 2020–2025
+          Data penelitian Sumedang 2020–2025
         </p>
       )}
     </div>

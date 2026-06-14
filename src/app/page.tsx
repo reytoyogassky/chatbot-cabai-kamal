@@ -41,12 +41,24 @@ export default function HomePage() {
   const [isSpeaking, setIsSpeaking]           = useState(false)
   const chatEndRef   = useRef<HTMLDivElement>(null)
   const ttsQueueRef  = useRef<string | null>(null)
+  const voicesRef    = useRef<SpeechSynthesisVoice[]>([])
+  const resumeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [])
 
   useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
+
+  // Bersihkan interval resume TTS saat komponen unmount
+  useEffect(() => {
+    return () => {
+      if (resumeIntervalRef.current) clearInterval(resumeIntervalRef.current)
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   // Cek status Groq
   useEffect(() => {
@@ -66,6 +78,21 @@ export default function HomePage() {
     loadSessions()
   }, [])
 
+  // ── Muat daftar voice TTS (di banyak browser mobile, voice list ──
+  // ── baru terisi setelah event "voiceschanged" terpicu) ──────────
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return
+
+    function loadVoices() {
+      const voices = window.speechSynthesis.getVoices()
+      if (voices.length > 0) voicesRef.current = voices
+    }
+
+    loadVoices()
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices)
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices)
+  }, [])
+
   // ── TTS Player (Web Speech API - gratis, support Bahasa Indonesia) ───────
   const speakText = useCallback((text: string) => {
     if (!ttsEnabled) return
@@ -76,6 +103,10 @@ export default function HomePage() {
 
     // Stop ucapan sebelumnya
     window.speechSynthesis.cancel()
+    if (resumeIntervalRef.current) {
+      clearInterval(resumeIntervalRef.current)
+      resumeIntervalRef.current = null
+    }
 
     // Bersihkan markdown sederhana biar gak dibaca apa adanya
     const cleanText = text
@@ -93,28 +124,78 @@ export default function HomePage() {
 
     if (!cleanText) return
 
-    const utterance = new SpeechSynthesisUtterance(cleanText)
-    utterance.lang = "id-ID"
-    utterance.rate = 1
-    utterance.pitch = 1
+    // ── Pecah teks panjang jadi beberapa kalimat ──
+    // Chrome di Android/iOS punya batas durasi ~speech per utterance;
+    // teks panjang sering terhenti diam-diam. Memecah per kalimat
+    // dan mengantrekannya secara berurutan jauh lebih stabil di HP.
+    const chunks = cleanText
+      .split(/(?<=[.!?])\s+/)
+      .reduce<string[]>((acc, sentence) => {
+        const last = acc[acc.length - 1]
+        if (last && (last + " " + sentence).length < 180) {
+          acc[acc.length - 1] = last + " " + sentence
+        } else {
+          acc.push(sentence)
+        }
+        return acc
+      }, [])
 
-    // Coba pilih voice Bahasa Indonesia kalau tersedia
-    const voices = window.speechSynthesis.getVoices()
+    if (chunks.length === 0) return
+
+    // Voice ID Bahasa Indonesia kalau tersedia (cache di voicesRef,
+    // sudah dimuat oleh listener "voiceschanged")
+    const voices = voicesRef.current.length > 0
+      ? voicesRef.current
+      : window.speechSynthesis.getVoices()
     const idVoice = voices.find(v => v.lang === "id-ID" || v.lang.startsWith("id"))
-    if (idVoice) utterance.voice = idVoice
 
-    utterance.onstart = () => setIsSpeaking(true)
-    utterance.onend = () => {
-      setIsSpeaking(false)
-      if (ttsQueueRef.current) {
-        const next = ttsQueueRef.current
-        ttsQueueRef.current = null
-        speakText(next)
+    let index = 0
+
+    function speakNext() {
+      if (index >= chunks.length) {
+        setIsSpeaking(false)
+        if (resumeIntervalRef.current) {
+          clearInterval(resumeIntervalRef.current)
+          resumeIntervalRef.current = null
+        }
+        if (ttsQueueRef.current) {
+          const next = ttsQueueRef.current
+          ttsQueueRef.current = null
+          speakText(next)
+        }
+        return
       }
-    }
-    utterance.onerror = () => setIsSpeaking(false)
 
-    window.speechSynthesis.speak(utterance)
+      const utterance = new SpeechSynthesisUtterance(chunks[index])
+      utterance.lang = "id-ID"
+      utterance.rate = 1
+      utterance.pitch = 1
+      if (idVoice) utterance.voice = idVoice
+
+      utterance.onstart = () => setIsSpeaking(true)
+      utterance.onerror = (e) => {
+        console.error("TTS error:", e.error)
+        index++
+        speakNext()
+      }
+      utterance.onend = () => {
+        index++
+        speakNext()
+      }
+
+      window.speechSynthesis.speak(utterance)
+    }
+
+    speakNext()
+
+    // ── Workaround bug Chrome (Android & desktop): speechSynthesis ──
+    // kadang otomatis pause setelah ~15 detik. resume() periodik
+    // menjaga supaya pembacaan teks panjang tetap lanjut.
+    resumeIntervalRef.current = setInterval(() => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.resume()
+      }
+    }, 5000)
   }, [ttsEnabled])
 
   function toggleTts() {
@@ -123,6 +204,10 @@ export default function HomePage() {
     // Stop audio kalau TTS dimatiin
     if (!next && typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel()
+      if (resumeIntervalRef.current) {
+        clearInterval(resumeIntervalRef.current)
+        resumeIntervalRef.current = null
+      }
       setIsSpeaking(false)
     }
   }

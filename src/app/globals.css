@@ -3,20 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --bg-base:     #0f1117;
-  --bg-surface:  #1a1d27;
-  --bg-elevated: #222535;
-  --bg-hover:    #2a2d3e;
-  --border:      rgba(255,255,255,0.07);
-  --border-mid:  rgba(255,255,255,0.12);
-  --accent:      #4ade80;
-  --accent-dim:  #16a34a;
-  --accent-muted:rgba(74,222,128,0.12);
-  --text-primary:#f0f2f5;
-  --text-muted:  #6b7280;
-  --text-faint:  #374151;
-  --red:         #f87171;
-  --amber:       #fbbf24;
+  --bg-base:     #fef6e4;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover:    #fff4cc;
+  --border:      #000000;
+  --border-mid:  #000000;
+  --accent:      #ff5470;
+  --accent-dim:  #ff2e58;
+  --accent-muted:#ffe35e;
+  --text-primary:#0a0a0a;
+  --text-muted:  #5c5c5c;
+  --text-faint:  #9a9a9a;
+  --red:         #ff3b3b;
+  --amber:       #ffd23f;
+  --shadow:      4px 4px 0px #000000;
+  --shadow-sm:   2px 2px 0px #000000;
+  --shadow-lg:   8px 8px 0px #000000;
 }
 
 @layer base {
@@ -26,15 +29,14 @@
     @apply antialiased;
     background: var(--bg-base);
     color: var(--text-primary);
-    font-feature-settings: "cv11", "ss01";
     font-family: var(--font-sans), sans-serif;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-base); border-left: 2px solid #000; }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border: 2px solid #000; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--amber); }
 }
 
 @layer components {
@@ -44,74 +46,79 @@
     color: var(--text-primary);
   }
   .prose-chat h1, .prose-chat h2, .prose-chat h3 {
-    @apply font-semibold mt-3 mb-1.5;
-    color: var(--accent);
+    @apply font-extrabold mt-3 mb-1.5 uppercase;
+    color: var(--text-primary);
   }
   .prose-chat p { @apply mb-2; }
   .prose-chat ul { @apply list-disc pl-4 mb-2 space-y-1; }
   .prose-chat ol { @apply list-decimal pl-4 mb-2 space-y-1; }
   .prose-chat li { @apply text-sm; }
-  .prose-chat strong { @apply font-semibold; color: var(--accent); }
+  .prose-chat strong { @apply font-extrabold; color: var(--text-primary); background: var(--amber); padding: 0 2px; }
   .prose-chat em { @apply italic; opacity: 0.85; }
   .prose-chat code {
-    @apply text-xs px-1.5 py-0.5 rounded font-mono;
-    background: rgba(74,222,128,0.1);
-    color: var(--accent);
-    border: 1px solid rgba(74,222,128,0.2);
+    @apply text-xs px-1.5 py-0.5 font-mono font-bold;
+    background: var(--accent-muted);
+    color: var(--text-primary);
+    border: 2px solid #000;
   }
   .prose-chat pre {
-    @apply rounded-lg p-3 text-xs overflow-x-auto mb-2;
-    background: var(--bg-base);
-    border: 1px solid var(--border-mid);
+    @apply p-3 text-xs overflow-x-auto mb-2 font-bold;
+    background: #fff;
+    border: 2px solid #000;
+    box-shadow: var(--shadow-sm);
   }
 
   /* ── Tabel markdown ── */
   .prose-chat table {
-    @apply w-full text-xs border-collapse mb-3 rounded-lg overflow-hidden;
-    border: 1px solid var(--border-mid);
+    @apply w-full text-xs border-collapse mb-3;
+    border: 2px solid #000;
   }
   .prose-chat th {
-    @apply text-left px-3 py-2 font-semibold;
-    background: var(--accent-muted);
-    color: var(--accent);
-    border-bottom: 1px solid var(--border-mid);
+    @apply text-left px-3 py-2 font-extrabold uppercase;
+    background: var(--accent);
+    color: #fff;
+    border-bottom: 2px solid #000;
+    border-right: 2px solid #000;
   }
   .prose-chat td {
     @apply px-3 py-2;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid #000;
+    border-right: 2px solid #000;
     color: var(--text-primary);
   }
   .prose-chat tr:last-child td { border-bottom: none; }
-  .prose-chat tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .prose-chat td:last-child, .prose-chat th:last-child { border-right: none; }
+  .prose-chat tr:nth-child(even) td { background: var(--bg-hover); }
 
   /* ── Blockquote ── */
   .prose-chat blockquote {
-    @apply border-l-2 pl-3 py-1 my-2 text-sm rounded-r-lg;
-    border-color: var(--amber);
-    background: rgba(251,191,36,0.07);
-    color: #fde68a;
+    @apply border-l-4 pl-3 py-1 my-2 text-sm font-bold;
+    border-color: #000;
+    background: var(--amber);
+    color: #000;
   }
 }
 
 /* ── Typing dots ── */
 @keyframes bounce-dot {
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40% { transform: translateY(-5px); opacity: 1; }
+  40% { transform: translateY(-6px); opacity: 1; }
 }
 .typing-dot {
-  width: 6px; height: 6px; border-radius: 99px;
+  width: 9px; height: 9px;
   background: var(--accent);
+  border: 2px solid #000;
   animation: bounce-dot 1.2s infinite;
 }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; background: var(--amber); }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; background: #4ce0d2; }
 
 /* ── Animasi masuk pesan ── */
 @keyframes msg-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate(-4px, 6px); }
+  to   { opacity: 1; transform: translate(0, 0); }
 }
-.msg-animate { animation: msg-in 0.2s ease; }
+.msg-animate { animation: msg-in 0.18s ease; }
 
 /* ── Streaming cursor ── */
 @keyframes cursor-blink {

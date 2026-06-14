@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Menu, X, Wifi, WifiOff } from "lucide-react"
+import { Menu, X, Wifi, WifiOff, Volume2, VolumeX } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
 import ChatMessage from "@/components/ChatMessage"
 import InputBar from "@/components/InputBar"
@@ -37,7 +37,10 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen]         = useState(false)
   const [groqStatus, setGroqStatus]           = useState<"online" | "offline" | "checking">("checking")
   const [totalMessages, setTotalMessages]     = useState(0)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const [ttsEnabled, setTtsEnabled]           = useState(true)
+  const [isSpeaking, setIsSpeaking]           = useState(false)
+  const chatEndRef   = useRef<HTMLDivElement>(null)
+  const ttsQueueRef  = useRef<string | null>(null)
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -49,7 +52,6 @@ export default function HomePage() {
   useEffect(() => {
     async function checkGroq() {
       try {
-        // Cukup hit endpoint GET sessions untuk cek koneksi
         const res = await fetch("/api/sessions")
         setGroqStatus(res.ok ? "online" : "offline")
       } catch {
@@ -64,13 +66,73 @@ export default function HomePage() {
     loadSessions()
   }, [])
 
+  // ── TTS Player (Web Speech API - gratis, support Bahasa Indonesia) ───────
+  const speakText = useCallback((text: string) => {
+    if (!ttsEnabled) return
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      console.error("Browser tidak mendukung Web Speech API")
+      return
+    }
+
+    // Stop ucapan sebelumnya
+    window.speechSynthesis.cancel()
+
+    // Bersihkan markdown sederhana biar gak dibaca apa adanya
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/#{1,6}\s/g, "")
+      .replace(/`{1,3}[^`]*`{1,3}/g, "")
+      .replace(/\|.*?\|/g, "")
+      .replace(/[-*+]\s/g, "")
+      .replace(/\d+\.\s/g, "")
+      .replace(/>\s/g, "")
+      .replace(/\n{2,}/g, ". ")
+      .replace(/\n/g, " ")
+      .trim()
+
+    if (!cleanText) return
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.lang = "id-ID"
+    utterance.rate = 1
+    utterance.pitch = 1
+
+    // Coba pilih voice Bahasa Indonesia kalau tersedia
+    const voices = window.speechSynthesis.getVoices()
+    const idVoice = voices.find(v => v.lang === "id-ID" || v.lang.startsWith("id"))
+    if (idVoice) utterance.voice = idVoice
+
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => {
+      setIsSpeaking(false)
+      if (ttsQueueRef.current) {
+        const next = ttsQueueRef.current
+        ttsQueueRef.current = null
+        speakText(next)
+      }
+    }
+    utterance.onerror = () => setIsSpeaking(false)
+
+    window.speechSynthesis.speak(utterance)
+  }, [ttsEnabled])
+
+  function toggleTts() {
+    const next = !ttsEnabled
+    setTtsEnabled(next)
+    // Stop audio kalau TTS dimatiin
+    if (!next && typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }
+
   async function loadSessions() {
     try {
       const res = await fetch("/api/sessions")
       const { sessions: data } = await res.json()
       const list: ChatSession[] = data || []
       setSessions(list)
-      // Auto-load sesi terbaru supaya riwayat langsung muncul
       if (list.length > 0) {
         await selectSessionById(list[0].id)
       }
@@ -79,7 +141,6 @@ export default function HomePage() {
     }
   }
 
-  // Internal helper — load pesan tanpa side-effect sidebar
   async function selectSessionById(id: string) {
     setActiveSessionId(id)
     setIsLoading(true)
@@ -96,13 +157,11 @@ export default function HomePage() {
     }
   }
 
-  // Pilih sesi → muat pesan
   async function selectSession(id: string) {
     setSidebarOpen(false)
     await selectSessionById(id)
   }
 
-  // Buat sesi baru secara eksplisit
   async function newSession() {
     try {
       const res = await fetch("/api/sessions", {
@@ -122,7 +181,6 @@ export default function HomePage() {
     setSidebarOpen(false)
   }
 
-  // Hapus sesi
   async function deleteSession(id: string) {
     await fetch(`/api/sessions?id=${id}`, { method: "DELETE" })
     setSessions((prev) => prev.filter((s) => s.id !== id))
@@ -132,14 +190,10 @@ export default function HomePage() {
     }
   }
 
-  // Kirim pesan
   async function sendMessage(content: string) {
     if (isStreaming) return
 
-    // Harus ada sesi aktif dulu
     if (!activeSessionId) {
-      // Auto-buat sesi kalau user langsung chat tanpa pilih/buat sesi
-      // (hanya sekali, tidak berulang)
       try {
         const res = await fetch("/api/sessions", {
           method: "POST",
@@ -186,6 +240,8 @@ export default function HomePage() {
       .slice(-10)
       .map((m) => ({ role: m.role, content: m.content }))
 
+    let finalResponse = ""
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -224,8 +280,8 @@ export default function HomePage() {
                 })
               }
               if (data.type === "done") {
+                finalResponse = accumulated
                 setGroqStatus("online")
-                // Update title sesi dengan pesan pertama jika masih "Sesi Baru"
                 setSessions((prev) =>
                   prev.map((s) =>
                     s.id === sessionId && s.title === "Sesi Baru"
@@ -239,15 +295,23 @@ export default function HomePage() {
         }
       } else {
         const data = await res.json()
+        const botContent = data.content || "Maaf, terjadi kesalahan."
+        finalResponse = botContent
         setMessages((prev) => {
           const updated = [...prev]
           const last = updated[updated.length - 1]
           if (last.role === "assistant") {
-            return [...updated.slice(0, -1), { ...last, content: data.content || "Maaf, terjadi kesalahan." }]
+            return [...updated.slice(0, -1), { ...last, content: botContent }]
           }
           return updated
         })
       }
+
+      // ── Auto-play TTS setelah streaming selesai ──
+      if (finalResponse && ttsEnabled) {
+        speakText(finalResponse)
+      }
+
     } catch (e) {
       console.error("Send error:", e)
       setMessages((prev) => {
@@ -285,42 +349,80 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex items-center justify-between h-14 px-4 shrink-0"
-          style={{ background: "var(--bg-surface)", borderBottom: "1px solid var(--border)" }}>
+        <header className="flex items-center justify-between h-16 px-4 shrink-0"
+          style={{ background: "var(--accent)", borderBottom: "3px solid #000" }}>
           <div className="flex items-center gap-3">
-            <button className="lg:hidden p-1.5 rounded-lg hover:bg-white/5"
-                    style={{ color: "var(--text-muted)" }}
+            <button className="lg:hidden p-1.5 flex items-center justify-center"
+                    style={{ color: "#000", background: "#fff", border: "2px solid #000" }}
                     onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X size={20}/> : <Menu size={20}/>}
             </button>
             <div>
-              <h2 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-                Asisten Budidaya Cabai
+              <h2 className="font-extrabold text-base uppercase" style={{ color: "#fff" }}>
+                SiCabe
               </h2>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Ahli Cabai Rawit Merah · Sumedang
+              <p className="text-xs font-bold" style={{ color: "#000" }}>
+                Assistant Cabai Rawit Merah
               </p>
             </div>
           </div>
 
-          <div className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border ${
-            groqStatus === "online" ? "bg-green-950/50 border-green-800/50 text-green-400"
-            : groqStatus === "offline" ? "bg-red-950/50 border-red-800/50 text-red-400"
-            : ""
-          }`} style={groqStatus === "checking" ? { background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-muted)" } : {}}>
-            {groqStatus === "online"
-              ? <><Wifi size={12}/> Groq Aktif</>
-              : groqStatus === "offline"
-              ? <><WifiOff size={12}/> Groq Offline</>
-              : <span className="animate-pulse">Memeriksa...</span>
-            }
+          <div className="flex items-center gap-2">
+            {/* ── TTS Toggle ── */}
+            <button
+              onClick={toggleTts}
+              title={ttsEnabled ? "Matikan suara AI" : "Aktifkan suara AI"}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 font-extrabold uppercase transition-all"
+              style={
+                ttsEnabled
+                  ? {
+                      background: isSpeaking ? "var(--amber)" : "#fff",
+                      border: "2px solid #000",
+                      color: "#000",
+                      boxShadow: "var(--shadow-sm)",
+                    }
+                  : {
+                      background: "#ccc",
+                      border: "2px solid #000",
+                      color: "#000",
+                    }
+              }
+            >
+              {ttsEnabled ? (
+                <>
+                  <Volume2 size={12} className={isSpeaking ? "animate-pulse" : ""} />
+                  <span className="hidden sm:inline">{isSpeaking ? "Berbicara..." : "Suara ON"}</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX size={12} />
+                  <span className="hidden sm:inline">Suara OFF</span>
+                </>
+              )}
+            </button>
+
+            {/* ── Groq Status ── */}
+            <div className={`flex items-center gap-1.5 text-xs px-3 py-1.5 font-extrabold uppercase`}
+              style={{
+                border: "2px solid #000",
+                boxShadow: "var(--shadow-sm)",
+                background: groqStatus === "online" ? "#4ce0d2" : groqStatus === "offline" ? "var(--red)" : "#fff",
+                color: groqStatus === "offline" ? "#fff" : "#000",
+              }}>
+              {groqStatus === "online"
+                ? <><Wifi size={12}/> Groq Aktif</>
+                : groqStatus === "offline"
+                ? <><WifiOff size={12}/> Groq Offline</>
+                : <span className="animate-pulse">Memeriksa...</span>
+              }
+            </div>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ background: "var(--bg-base)" }}>
           {isLoading ? (
             <div className="flex justify-center pt-12">
-              <div className="flex gap-2 items-center text-sm" style={{ color: "var(--text-muted)" }}>
+              <div className="flex gap-2 items-center text-sm font-extrabold uppercase" style={{ color: "var(--text-primary)" }}>
                 <div className="typing-dot"/><div className="typing-dot"/><div className="typing-dot"/>
                 <span className="ml-1">Memuat riwayat...</span>
               </div>

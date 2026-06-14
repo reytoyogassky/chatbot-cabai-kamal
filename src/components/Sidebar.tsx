@@ -55,37 +55,37 @@ export default function Sidebar({
   return (
     <aside
       className="flex flex-col h-full w-72 min-w-[280px] select-none"
-      style={{ background: "var(--bg-surface)", borderRight: "1px solid var(--border)" }}
+      style={{ background: "var(--bg-surface)", borderRight: "3px solid #000" }}
     >
       {/* ── Header ── */}
-      <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
+      <div className="px-5 pt-5 pb-4" style={{ borderBottom: "3px solid #000", background: "var(--accent)" }}>
         <div className="flex items-center gap-3 mb-3">
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-            style={{ background: "var(--accent-muted)", border: "1px solid rgba(74,222,128,0.2)" }}
+            className="w-10 h-10 flex items-center justify-center text-lg shrink-0"
+            style={{ background: "#fff", border: "2px solid #000", boxShadow: "var(--shadow-sm)" }}
           >
             🌶️
           </div>
           <div>
-            <h1 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-              Konsultan Cabai Rawit
+            <h1 className="font-extrabold text-sm uppercase tracking-wide" style={{ color: "#fff" }}>
+              SiCabe
             </h1>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-              Kab. Sumedang · AI Agent
+            <p className="text-xs mt-0.5 font-bold" style={{ color: "#000" }}>
+              Asisten Budidaya Cabai Rawit Merah
             </p>
           </div>
         </div>
         <div
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
-          style={{ background: "var(--accent-muted)", color: "var(--accent)", border: "1px solid rgba(74,222,128,0.2)" }}
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 font-extrabold uppercase"
+          style={{ background: "var(--amber)", color: "#000", border: "2px solid #000" }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          Groq · Gratis
+          <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+          GroqAi
         </div>
       </div>
 
       {/* ── Statistik ── */}
-      <div className="grid grid-cols-3 gap-2 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+      <div className="grid grid-cols-3 gap-2 px-4 py-3" style={{ borderBottom: "3px solid #000" }}>
         {[
           { value: totalMessages, label: "Pesan" },
           { value: sessions.length, label: "Sesi" },
@@ -93,18 +93,18 @@ export default function Sidebar({
         ].map((s) => (
           <div
             key={s.label}
-            className="text-center rounded-lg py-2"
-            style={{ background: "var(--bg-elevated)" }}
+            className="text-center py-2"
+            style={{ background: "var(--bg-base)", border: "2px solid #000", boxShadow: "var(--shadow-sm)" }}
           >
-            <div className="text-base font-bold" style={{ color: "var(--accent)" }}>{s.value}</div>
-            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{s.label}</div>
+            <div className="text-base font-extrabold" style={{ color: "var(--accent-dim)" }}>{s.value}</div>
+            <div className="text-xs font-bold uppercase" style={{ color: "var(--text-muted)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* ── Topik Cepat ── */}
       <div className="px-4 pt-3 pb-2">
-        <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs uppercase tracking-widest mb-2 font-extrabold" style={{ color: "var(--text-primary)" }}>
           Topik Cepat
         </p>
         <div className="grid grid-cols-2 gap-1.5">
@@ -112,22 +112,25 @@ export default function Sidebar({
             <button
               key={label}
               onClick={() => onQuickTopic(query)}
-              className="flex items-center gap-1.5 text-left text-xs px-2.5 py-2 rounded-lg transition-all duration-150"
+              className="flex items-center gap-1.5 text-left text-xs px-2.5 py-2 font-bold transition-all duration-100"
               style={{
-                background: "var(--bg-elevated)",
+                background: "var(--bg-base)",
                 color: "var(--text-primary)",
-                border: "1px solid var(--border)",
+                border: "2px solid #000",
+                boxShadow: "var(--shadow-sm)",
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = "var(--bg-hover)"
-                e.currentTarget.style.borderColor = "rgba(74,222,128,0.3)"
+                e.currentTarget.style.background = "var(--accent-muted)"
+                e.currentTarget.style.transform = "translate(2px, 2px)"
+                e.currentTarget.style.boxShadow = "0px 0px 0px #000"
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = "var(--bg-elevated)"
-                e.currentTarget.style.borderColor = "var(--border)"
+                e.currentTarget.style.background = "var(--bg-base)"
+                e.currentTarget.style.transform = "translate(0, 0)"
+                e.currentTarget.style.boxShadow = "var(--shadow-sm)"
               }}
             >
-              <Icon size={11} className="shrink-0" style={{ color: "var(--accent)" }} />
+              <Icon size={12} className="shrink-0" style={{ color: "var(--accent-dim)" }} />
               <span className="truncate">{label}</span>
             </button>
           ))}
@@ -137,24 +140,24 @@ export default function Sidebar({
       {/* ── Riwayat ── */}
       <div
         className="flex-1 flex flex-col overflow-hidden px-4 pt-3"
-        style={{ borderTop: "1px solid var(--border)" }}
+        style={{ borderTop: "3px solid #000" }}
       >
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Riwayat</p>
+          <p className="text-xs uppercase tracking-widest font-extrabold" style={{ color: "var(--text-primary)" }}>Riwayat</p>
           <button
             onClick={onNewSession}
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition-all"
-            style={{ background: "var(--accent-muted)", color: "var(--accent)", border: "1px solid rgba(74,222,128,0.2)" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(74,222,128,0.2)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--accent-muted)"}
+            className="flex items-center gap-1 text-xs px-2.5 py-1 font-extrabold uppercase transition-all duration-100"
+            style={{ background: "var(--amber)", color: "#000", border: "2px solid #000", boxShadow: "var(--shadow-sm)" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translate(2px, 2px)"; e.currentTarget.style.boxShadow = "0px 0px 0px #000" }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translate(0, 0)"; e.currentTarget.style.boxShadow = "var(--shadow-sm)" }}
           >
-            <Plus size={11} /> Baru
+            <Plus size={12} /> Baru
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5 pb-2">
           {sessions.length === 0 && (
-            <p className="text-xs text-center py-6" style={{ color: "var(--text-muted)" }}>
+            <p className="text-xs text-center py-6 font-bold uppercase" style={{ color: "var(--text-muted)" }}>
               Belum ada riwayat
             </p>
           )}
@@ -162,30 +165,25 @@ export default function Sidebar({
             <div
               key={s.id}
               onClick={() => onSelectSession(s.id)}
-              className="group flex items-start gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150"
+              className="group flex items-start gap-2 px-3 py-2.5 cursor-pointer transition-all duration-100"
               style={{
-                background: activeSessionId === s.id ? "var(--accent-muted)" : "transparent",
-                border: `1px solid ${activeSessionId === s.id ? "rgba(74,222,128,0.2)" : "transparent"}`,
-              }}
-              onMouseEnter={e => {
-                if (activeSessionId !== s.id) e.currentTarget.style.background = "var(--bg-elevated)"
-              }}
-              onMouseLeave={e => {
-                if (activeSessionId !== s.id) e.currentTarget.style.background = "transparent"
+                background: activeSessionId === s.id ? "var(--accent-muted)" : "var(--bg-base)",
+                border: "2px solid #000",
+                boxShadow: activeSessionId === s.id ? "var(--shadow-sm)" : "none",
               }}
             >
-              <MessageSquare size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-muted)" }} />
+              <MessageSquare size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-primary)" }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs truncate font-medium" style={{ color: "var(--text-primary)" }}>{s.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{formatDate(s.updated_at)}</p>
+                <p className="text-xs truncate font-extrabold" style={{ color: "var(--text-primary)" }}>{s.title}</p>
+                <p className="text-xs mt-0.5 font-bold uppercase" style={{ color: "var(--text-muted)" }}>{formatDate(s.updated_at)}</p>
               </div>
               <button
                 onClick={(e) => handleDelete(e, s.id)}
-                className="shrink-0 p-0.5 rounded transition-all opacity-0 group-hover:opacity-60 hover:!opacity-100"
+                className="shrink-0 p-0.5 transition-all opacity-0 group-hover:opacity-100"
                 style={{ color: deleteConfirm === s.id ? "var(--red)" : "var(--text-muted)" }}
                 title={deleteConfirm === s.id ? "Klik lagi untuk hapus" : "Hapus sesi"}
               >
-                <Trash2 size={12} />
+                <Trash2 size={13} />
               </button>
             </div>
           ))}
@@ -194,8 +192,8 @@ export default function Sidebar({
 
       {/* ── Footer ── */}
       <div
-        className="px-4 py-3 text-xs text-center leading-relaxed"
-        style={{ borderTop: "1px solid var(--border)", color: "var(--text-muted)" }}
+        className="px-4 py-3 text-xs text-center leading-relaxed font-extrabold uppercase"
+        style={{ borderTop: "3px solid #000", color: "#fff", background: "#000" }}
       >
         Skripsi Kamal Nurfalah · UNSAP 2025
       </div>

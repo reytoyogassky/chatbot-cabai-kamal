@@ -1,4 +1,4 @@
-// File: D:\SKRIPSI KAMAL\SKRIPSI\chatbot-cabai-gemini\src\app\api\sessions\messages\route.ts
+// File: D:\chatbot-cabai-gemini\src\app\api\sessions\messages\route.ts
 import * as entry from '../../../../../../src/app/api/sessions/messages/route.js'
 import type { NextRequest } from 'next/server.js'
 

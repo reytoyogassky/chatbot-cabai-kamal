@@ -9,7 +9,7 @@ const font = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Konsultan Cabai Rawit Merah | Kab. Sumedang",
+  title: "SiCabe",
   description:
     "AI Agent konsultan budidaya cabai rawit merah berbasis penelitian Decision Tree Kab. Sumedang 2020–2025. Gratis dengan Groq + Supabase.",
   keywords: ["cabai rawit", "budidaya cabai", "pertanian sumedang", "gagal panen", "konsultan pertanian"],

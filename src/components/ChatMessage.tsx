@@ -55,15 +55,17 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
       <div className="flex justify-end msg-animate">
         <div className="max-w-[75%]">
           <div
-            className="px-4 py-3 rounded-2xl rounded-br-sm text-sm leading-relaxed shadow-sm"
+            className="px-4 py-3 text-sm leading-relaxed font-bold"
             style={{
-              background: "var(--accent-dim)",
+              background: "var(--accent)",
               color: "#fff",
+              border: "2px solid #000",
+              boxShadow: "var(--shadow)",
             }}
           >
             {message.content}
           </div>
-          <p className="text-right text-xs mt-1 pr-1" style={{ color: "var(--text-muted)" }}>
+          <p className="text-right text-xs mt-1.5 pr-1 font-bold uppercase" style={{ color: "var(--text-muted)" }}>
             {formattedTime}
           </p>
         </div>
@@ -75,18 +77,19 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
     <div className="flex gap-3 msg-animate" ref={contentRef}>
       {/* Avatar bot */}
       <div
-        className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0 mt-1"
-        style={{ background: "var(--accent-muted)", border: "1px solid rgba(74,222,128,0.2)" }}
+        className="w-9 h-9 flex items-center justify-center text-base shrink-0 mt-1"
+        style={{ background: "var(--accent-muted)", border: "2px solid #000", boxShadow: "var(--shadow-sm)" }}
       >
         🌶️
       </div>
 
       <div className="flex-1 min-w-0">
         <div
-          className="rounded-2xl rounded-tl-sm px-4 py-3"
+          className="px-4 py-3"
           style={{
             background: "var(--bg-surface)",
-            border: "1px solid var(--border-mid)",
+            border: "2px solid #000",
+            boxShadow: "var(--shadow)",
           }}
         >
           {message.content === "..." ? (
@@ -102,7 +105,7 @@ export default function ChatMessage({ message, isStreaming = false }: ChatMessag
             />
           )}
         </div>
-        <p className="text-xs mt-1 pl-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs mt-1.5 pl-1 font-bold uppercase" style={{ color: "var(--text-muted)" }}>
           {isStreaming ? "Mengetik..." : formattedTime}
         </p>
       </div>
